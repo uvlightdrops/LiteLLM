@@ -1,0 +1,98 @@
+# LiteLLM Kubernetes Deployment - Base Template
+# This is the shared base template for the app. Environment-specific values are
+# filled via yaml_config_support overlays and remain separate from the repository.
+
+namespace: litellm
+
+image:
+  repository: litellm
+  tag: latest
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+deployment:
+  name: litellm-api
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+  nodePort: 30080
+  name: litellm-api
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: api.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: litellm-tls
+      hosts:
+        - api.example.com
+
+env:
+  LOG_LEVEL: INFO
+
+configMap:
+  enabled: true
+  name: litellm-config
+  data:
+    config.yaml: |
+      log_level: INFO
+
+persistentVolume:
+  enabled: true
+  size: 10Gi
+  storageClassName: standard
+  mountPath: /app/data
+
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 10
+  periodSeconds: 5
+
+rbac:
+  enabled: true
+  serviceAccountName: litellm
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL

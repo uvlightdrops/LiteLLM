@@ -1,0 +1,10 @@
+k8s/generated/
+
+.idea/
+
+*.swp
+*.swo
+
+__pycache__/
+*.pyc
+

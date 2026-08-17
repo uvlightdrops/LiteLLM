@@ -1,0 +1,20 @@
+# Ingress-specific configuration, intentionally kept minimal and compatible with
+# the simple dot-path replacement strategy used by yaml_config_support.
+
+dev:
+  ingress.enabled: false
+  ingress.hosts[0].host: localhost
+  ingress.tls[0].secretName: litellm-dev-tls
+  ingress.tls[0].hosts[0]: localhost
+
+staging:
+  ingress.enabled: true
+  ingress.hosts[0].host: staging.litellm.local
+  ingress.tls[0].secretName: litellm-staging-tls
+  ingress.tls[0].hosts[0]: staging.litellm.local
+
+prod:
+  ingress.enabled: true
+  ingress.hosts[0].host: api.example.com
+  ingress.tls[0].secretName: litellm-prod-tls
+  ingress.tls[0].hosts[0]: api.example.com

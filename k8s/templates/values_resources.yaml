@@ -1,0 +1,46 @@
+# Environment-specific runtime overrides for the LiteLLM deployment.
+# The file is loaded as a single environment block by yaml_config_support.
+# Values are intentionally flat to work with fill_simple_template.
+
+dev:
+  namespace: litellm-dev
+  image.tag: latest
+  deployment.replicas: 1
+  service.type: NodePort
+  service.nodePort: 30080
+  ingress.enabled: false
+  env.LOG_LEVEL: DEBUG
+  resources.requests.cpu: 100m
+  resources.requests.memory: 256Mi
+  resources.limits.cpu: 500m
+  resources.limits.memory: 512Mi
+  persistentVolume.size: 5Gi
+  persistentVolume.storageClassName: standard
+
+staging:
+  namespace: litellm-staging
+  image.tag: v1.0.0-staging
+  deployment.replicas: 2
+  service.type: ClusterIP
+  ingress.enabled: true
+  env.LOG_LEVEL: INFO
+  resources.requests.cpu: 250m
+  resources.requests.memory: 512Mi
+  resources.limits.cpu: 1000m
+  resources.limits.memory: 1Gi
+  persistentVolume.size: 20Gi
+  persistentVolume.storageClassName: standard
+
+prod:
+  namespace: litellm
+  image.tag: v1.0.0
+  deployment.replicas: 3
+  service.type: ClusterIP
+  ingress.enabled: true
+  env.LOG_LEVEL: WARNING
+  resources.requests.cpu: 500m
+  resources.requests.memory: 1Gi
+  resources.limits.cpu: 2000m
+  resources.limits.memory: 2Gi
+  persistentVolume.size: 100Gi
+  persistentVolume.storageClassName: premium-storage

@@ -1,0 +1,51 @@
+# LiteLLM Kubernetes Deployment - Credentials Template
+# Diese Datei wird durch values_creds_<env>.yaml für jede Umgebung überschrieben
+
+# Sensitive Credentials - werden durch den Value Store gefüllt
+secrets:
+  litellmMasterKey: ${LITELLM_MASTER_KEY}
+  databasePassword: ${DATABASE_PASSWORD}
+  databaseUrl: ${DATABASE_URL}
+  
+  # API Keys für verschiedene LLM Provider
+  apiKeys:
+    openai:
+      key: ${OPENAI_API_KEY}
+    anthropic:
+      key: ${ANTHROPIC_API_KEY}
+    cohere:
+      key: ${COHERE_API_KEY}
+    azure:
+      key: ${AZURE_API_KEY}
+      endpoint: ${AZURE_ENDPOINT}
+    
+  # Authentifizierung und Autorisierung
+  auth:
+    jwtSecret: ${JWT_SECRET}
+    jwtAlgorithm: ${JWT_ALGORITHM}
+    
+  # Optional: SMTP für Email-Benachrichtigungen
+  smtp:
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    fromEmail: ${SMTP_FROM_EMAIL}
+    
+  # Optional: Sentry für Error Tracking
+  sentry:
+    dsn: ${SENTRY_DSN}
+    environment: ${SENTRY_ENVIRONMENT}
+    
+  # Optional: Datadog für Monitoring
+  datadog:
+    apiKey: ${DATADOG_API_KEY}
+    appKey: ${DATADOG_APP_KEY}
+
+# Image Pull Secrets für private Registries
+imagePullSecrets:
+  - name: litellm-registry-secret
+    registry: ${REGISTRY_URL}
+    username: ${REGISTRY_USERNAME}
+    password: ${REGISTRY_PASSWORD}
+    email: ${REGISTRY_EMAIL}
