@@ -234,14 +234,14 @@ Logische Isolation im K8s-Cluster.
 ```
 ┌─────────────────────────────────┐
 │ Public Git Repository           │
-│  ├── k8s/templates/*.yaml      │
-│  └── .gitignore (generated/)   │
+│  ├── k8s/prod/templates/*.yaml │
+│  └── .gitignore (prod/generated/) │
 └─────────────────────────────────┘
            ↓
          Füllung (python k8s_fill_config.py)
            ↓
 ┌─────────────────────────────────┐
-│ Private Value-Store (~/.litellm)│
+│ Private Value-Store (~/dev_data/LiteLLM)│
 │  ├── values_creds_prod.yaml    │
 │  └── values_creds_staging.yaml │
 └─────────────────────────────────┘
@@ -250,7 +250,7 @@ Logische Isolation im K8s-Cluster.
            ↓
 ┌─────────────────────────────────┐
 │ Generated k8s-Manifeste         │
-│  └── cf-prod/updated_*.yaml    │
+│  └── k8s/prod/generated/cf-prod/ │
 │      (NIEMALS in Git!)          │
 └─────────────────────────────────┘
 ```
@@ -288,13 +288,13 @@ securityContext:
 
 ```bash
 # 1. Neue Secrets im Value-Store eintragen
-vim ~/.litellm/k8s-secrets/values_creds_prod.yaml
+vim ~/dev_data/LiteLLM/values_creds_prod.yaml
 
 # 2. Neue Manifest-Dateien generieren
 python k8s/k8s_fill_config.py prod
 
 # 3. Secrets in K8s aktualisieren
-kubectl apply -f k8s/generated/cf-prod/secrets-*.yaml
+kubectl apply -f k8s/prod/generated/cf-prod/secrets-*.yaml
 
 # 4. Pods neu starten (automatisch durch Deployment)
 kubectl rollout restart deployment/litellm-api -n litellm
@@ -315,9 +315,10 @@ kubectl rollout restart deployment/litellm-api -n litellm
 
 ## Quick Links
 
-- **Templates:** `k8s/templates/`
+- **Dev manifests:** `k8s/dev/`
+- **Templates:** `k8s/prod/templates/`
 - **CLI-Wrapper:** `k8s/k8s_fill_config.py`
-- **Generated Outputs:** `k8s/generated/` (in .gitignore)
+- **Generated Outputs:** `k8s/prod/generated/` (in .gitignore)
 - **README:** `k8s/README.md`
 
 ---

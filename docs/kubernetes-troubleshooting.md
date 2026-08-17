@@ -37,7 +37,7 @@ kubectl get pods -n litellm -o jsonpath='{.items[0].status.containerStatuses[0].
 
 # Lösung: Correct Image Tag
 python k8s/k8s_fill_config.py dev
-kubectl apply -f k8s/generated/cf-dev/deploy-litellm-api.yaml
+kubectl apply -f k8s/dev/deployment.yaml
 ```
 
 ### Problem: Pod läuft, aber Ready=0/1
@@ -242,14 +242,14 @@ kubectl get secret -n litellm litellm-secrets -o jsonpath='{.data.litellm-master
 # Sollte echten Wert zeigen, nicht "${LITELLM_MASTER_KEY}"
 
 # 2. Value-Store Datei korrekt?
-ls -la ~/.litellm/k8s-secrets/values_creds_dev.yaml
-chmod 600 ~/.litellm/k8s-secrets/values_creds_dev.yaml
+ls -la ~/dev_data/LiteLLM/values_creds_dev.yaml
+chmod 600 ~/dev_data/LiteLLM/values_creds_dev.yaml
 
 # 3. Config neu generieren
-rm -rf k8s/generated/cf-dev/
+rm -rf k8s/prod/generated/cf-prod/
 python k8s/k8s_fill_config.py dev
 # Neu deployen
-kubectl apply -f k8s/generated/cf-dev/secrets-litellm.yaml
+kubectl apply -f k8s/dev/secret.yaml
 ```
 
 ### Problem: Umgebungsvariablen in Pod nicht gesetzt

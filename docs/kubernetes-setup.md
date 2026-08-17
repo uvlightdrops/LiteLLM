@@ -217,11 +217,11 @@ Der **Value-Store** enthält alle sensiblen Daten. Er ist **nicht in Git** und l
 
 ```bash
 # Sicheres Verzeichnis mit restriktiven Permissions
-mkdir -p ~/.litellm/k8s-secrets
-chmod 700 ~/.litellm/k8s-secrets
+mkdir -p ~/dev_data/LiteLLM
+chmod 700 ~/dev_data/LiteLLM
 
 # Verifizieren
-ls -ld ~/.litellm/k8s-secrets
+ls -ld ~/dev_data/LiteLLM
 # Sollte: drwx------ zeigen (nur Owner read/write/execute)
 ```
 
@@ -229,7 +229,7 @@ ls -ld ~/.litellm/k8s-secrets
 
 **Dateistruktur:**
 ```
-~/.litellm/k8s-secrets/
+~/dev_data/LiteLLM/
 ├── values_creds_dev.yaml      # Dev Secrets
 ├── values_creds_staging.yaml  # Staging Secrets
 └── values_creds_prod.yaml     # Production Secrets (SEHR SICHER!)
@@ -238,7 +238,7 @@ ls -ld ~/.litellm/k8s-secrets
 ### 3. Development Secrets füllen
 
 ```bash
-cat > ~/.litellm/k8s-secrets/values_creds_dev.yaml << 'EOF'
+cat > ~/dev_data/LiteLLM/values_creds_dev.yaml << 'EOF'
 secrets:
   litellmMasterKey: "dev-master-key-12345"
   databasePassword: "dev-db-pass-insecure"
@@ -266,14 +266,14 @@ imagePullSecrets:
     email: "dev@example.com"
 EOF
 
-chmod 600 ~/.litellm/k8s-secrets/values_creds_dev.yaml
+chmod 600 ~/dev_data/LiteLLM/values_creds_dev.yaml
 ```
 
 ### 4. Production Secrets füllen (SEHR SICHER!)
 
 ```bash
 # Mit externem Editor (sicherer als echo)
-$EDITOR ~/.litellm/k8s-secrets/values_creds_prod.yaml
+$EDITOR ~/dev_data/LiteLLM/values_creds_prod.yaml
 ```
 
 **Template (kopieren + ausfüllen):**
@@ -308,10 +308,10 @@ imagePullSecrets:
 
 **Permissions setzen:**
 ```bash
-chmod 600 ~/.litellm/k8s-secrets/values_creds_{staging,prod}.yaml
+chmod 600 ~/dev_data/LiteLLM/values_creds_{staging,prod}.yaml
 
 # Verifizieren (sollte alle -rw------- sein)
-ls -l ~/.litellm/k8s-secrets/
+ls -l ~/dev_data/LiteLLM/
 ```
 
 ### 5. .gitignore Schutz
@@ -320,11 +320,11 @@ Stelle sicher, dass Value-Store nie in Git landet:
 
 ```bash
 # Lokal (Pro-Tipp)
-echo ~/.litellm/ >> ~/.gitignore_global
+echo ~/dev_data/ >> ~/.gitignore_global
 git config --global core.excludesfile ~/.gitignore_global
 
 # Im Repository
-echo ".litellm/" >> ~/.litellm-repo/.gitignore
+echo "dev_data/" >> /path/to/your/repo/.gitignore
 ```
 
 ## Erste Konfigurationen
@@ -337,22 +337,28 @@ python k8s/k8s_fill_config.py --help
 # Sollte Help-Text zeigen
 ```
 
-### 2. Development Config generieren
+### 2. Development Config anwenden
 
 ```bash
-python k8s/k8s_fill_config.py dev
-
-# Ausgabe sollte sein:
-# Füllen der LiteLLM K8s-Konfigurationen für Umgebung: dev
-# ...
-# ✓ Konfiguration erfolgreich gefüllt!
-#   Ergebnis: k8s/generated/cf-dev/updated_values-dev.yaml
+kubectl apply -f k8s/dev/
 ```
 
-### 3. Generated Files inspizieren
+### 3. Production Config generieren
 
 ```bash
-ls -la k8s/generated/cf-dev/
+python k8s/k8s_fill_config.py prod
+
+# Ausgabe sollte sein:
+# Füllen der LiteLLM K8s-Konfigurationen für Umgebung: prod
+# ...
+# ✓ Konfiguration erfolgreich gefüllt!
+#   Ergebnis: k8s/prod/generated/cf-prod/updated_values-prod.yaml
+```
+
+### 4. Generated Files inspizieren
+
+```bash
+ls -la k8s/prod/generated/cf-prod/
 # Sollte folgende Dateien enthalten:
 # - deploy-litellm-api.yaml
 # - service-litellm-api.yaml
@@ -365,11 +371,11 @@ ls -la k8s/generated/cf-dev/
 # - namespace.yaml
 ```
 
-### 4. Secrets verifizieren (WICHTIG!)
+### 5. Secrets verifizieren (WICHTIG!)
 
 ```bash
 # Generated Secret inspizieren (NIEMALS in Git!)
-cat k8s/generated/cf-dev/secrets-litellm.yaml | head -20
+cat k8s/prod/generated/cf-prod/secrets-litellm.yaml | head -20
 
 # Sollte tatsächliche Secrets (NICHT Platzhalter) enthalten:
 # litellm-master-key: "dev-master-key-12345"
@@ -393,7 +399,7 @@ kubectl get nodes
 
 ```bash
 # Namespace erzeugen (optional, wird auch durch YAML gemacht)
-kubectl apply -f k8s/generated/cf-dev/namespace.yaml
+kubectl apply -f k8s/prod/generated/cf-prod/namespace.yaml
 
 # Verifizieren
 kubectl get ns | grep litellm
@@ -403,7 +409,7 @@ kubectl get ns | grep litellm
 
 ```bash
 # Alle YAMLs validieren (ohne deploy)
-kubectl apply -f k8s/generated/cf-dev/ --dry-run=client -v=6
+kubectl apply -f k8s/prod/generated/cf-prod/ --dry-run=client -v=6
 
 # Sollte "success" ausgeben, KEINE Fehler
 ```

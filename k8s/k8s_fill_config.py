@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CLI-Wrapper für yaml_config_support zur Füllung der LiteLLM Kubernetes Deployments.
+CLI-Wrapper für yaml_config_support zur Füllung der LiteLLM Production-Kubernetes-Deployments.
 
 Dieses Skript lädt die Basis-Template-Datei, kombiniert sie mit umgebungsspezifischen
 Overlays und secret-Dateien und generiert fertige Kubernetes YAML-Dateien.
@@ -22,9 +22,9 @@ from yaml_config_support.config_models import FillOptions
 
 # Pfade definieren
 SCRIPT_DIR = Path(__file__).parent
-TEMPLATE_DIR = SCRIPT_DIR / "templates"
+TEMPLATE_DIR = SCRIPT_DIR / "prod" / "templates"
 VALUESTORE_DIR = Path.home() / "dev_data" / "LiteLLM"
-OUTPUT_DIR = SCRIPT_DIR / "generated"
+OUTPUT_DIR = SCRIPT_DIR / "prod" / "generated"
 
 # Optional override via env variable for a different secure secrets directory.
 VALUESTORE_DIR = Path(__import__("os").environ.get("LITELLM_SECRET_DIR", str(VALUESTORE_DIR)))

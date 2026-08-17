@@ -1,4 +1,4 @@
-k8s/generated/
+k8s/prod/generated/
 
 .idea/
 
@@ -7,4 +7,3 @@ k8s/generated/
 
 __pycache__/
 *.pyc
-

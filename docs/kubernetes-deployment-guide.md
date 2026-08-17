@@ -35,11 +35,11 @@ kubectl get storageclass
 # Sollte mindestens eine Klasse zeigen
 
 # 6. Value-Store
-ls -la ~/.litellm/k8s-secrets/
+ls -la ~/dev_data/LiteLLM/
 # Sollte values_creds_*.yaml Dateien enthalten
 
-# 7. Templates
-ls -la k8s/templates/ | grep -v "^d"
+# 7. Production templates
+ls -la k8s/prod/templates/ | grep -v "^d"
 # Sollte 18 Dateien zeigen
 ```
 
@@ -59,26 +59,34 @@ kubectl create namespace litellm-dev
 
 ### 1. Development Config
 
+For the local Minikube setup, use the checked-in manifests directly:
+
+```bash
+kubectl apply -f k8s/dev/
+```
+
+### 2. Production Config
+
 ```bash
 cd /home/flow/dev_ldbv/LiteLLM
 
-python k8s/k8s_fill_config.py dev
+python k8s/k8s_fill_config.py prod
 
 # Ausgabe:
-# Füllen der LiteLLM K8s-Konfigurationen für Umgebung: dev
-# Template-Verzeichnis: k8s/templates
-# Value-Store-Verzeichnis: ~/.litellm/k8s-secrets
-# Ausgabeverzeichnis: k8s/generated
+# Füllen der LiteLLM K8s-Konfigurationen für Umgebung: prod
+# Template-Verzeichnis: k8s/prod/templates
+# Value-Store-Verzeichnis: ~/dev_data/LiteLLM
+# Ausgabeverzeichnis: k8s/prod/generated
 # 
 # ✓ Konfiguration erfolgreich gefüllt!
-#   Ergebnis: k8s/generated/cf-dev/updated_values-dev.yaml
+#   Ergebnis: k8s/prod/generated/cf-prod/updated_values-prod.yaml
 ```
 
-### 2. Generated Files inspizieren
+### 3. Generated Files inspizieren
 
 ```bash
 # Verifizieren, dass alle Dateien generiert wurden
-ls -la k8s/generated/cf-dev/
+ls -la k8s/prod/generated/cf-prod/
 
 # Sollte zeigen:
 # -rw-r--r-- configmap-litellm.yaml
@@ -90,29 +98,29 @@ ls -la k8s/generated/cf-dev/
 # -rw-r--r-- rbac-litellm.yaml
 # -rw-r--r-- secrets-litellm.yaml
 # -rw-r--r-- service-litellm-api.yaml
-# -rw-r--r-- updated_values-dev.yaml
+# -rw-r--r-- updated_values-prod.yaml
 ```
 
-### 3. Secrets verifizieren (KRITISCH!)
+### 4. Secrets verifizieren (KRITISCH!)
 
 ```bash
 # NIEMALS generierte Secrets in Git!
-cat k8s/generated/cf-dev/secrets-litellm.yaml | head -20
+cat k8s/prod/generated/cf-prod/secrets-litellm.yaml | head -20
 
 # Sollte ECHTE Secrets enthalten, z.B.:
 # litellm-master-key: "dev-master-key-12345"
 # NICHT: "litellm-master-key: ${LITELLM_MASTER_KEY}"
 
 # Verify: KEINE Platzhalter mehr?
-grep -n '\${' k8s/generated/cf-dev/secrets-litellm.yaml
+grep -n '\${' k8s/prod/generated/cf-prod/secrets-litellm.yaml
 # Sollte KEINE Ausgabe zeigen!
 ```
 
-### 4. YAML Syntax validieren
+### 5. YAML Syntax validieren
 
 ```bash
 # Dry-run: Alle YAMLs überprüfen ohne anzuwenden
-kubectl apply -f k8s/generated/cf-dev/ \
+kubectl apply -f k8s/prod/generated/cf-prod/ \
   --namespace litellm \
   --dry-run=client \
   -v=6
@@ -120,7 +128,7 @@ kubectl apply -f k8s/generated/cf-dev/ \
 # Sollte "success" zeigen, KEINE Fehler
 ```
 
-### 5. Custom Output Directory (Optional)
+### 6. Custom Output Directory (Optional)
 
 ```bash
 # Für sicheren Output-Pfad (z.B. /tmp, verschlüsselt)
@@ -137,7 +145,7 @@ python k8s/k8s_fill_config.py prod \
 
 ```bash
 # Option A: Über generierte YAML
-kubectl apply -f k8s/generated/cf-dev/namespace.yaml
+kubectl apply -f k8s/prod/generated/cf-prod/namespace.yaml
 
 # Verifizieren
 kubectl get namespaces | grep litellm
@@ -147,7 +155,7 @@ kubectl get namespaces | grep litellm
 
 ```bash
 # Secrets müssen VOR anderen Ressourcen existieren
-kubectl apply -f k8s/generated/cf-dev/secrets-litellm.yaml
+kubectl apply -f k8s/prod/generated/cf-prod/secrets-litellm.yaml
 
 # Verifizieren
 kubectl get secrets -n litellm
@@ -158,10 +166,10 @@ kubectl get secrets -n litellm
 
 ```bash
 # ConfigMap
-kubectl apply -f k8s/generated/cf-dev/configmap-litellm.yaml
+kubectl apply -f k8s/prod/generated/cf-prod/configmap-litellm.yaml
 
 # RBAC (ServiceAccount + Roles)
-kubectl apply -f k8s/generated/cf-dev/rbac-litellm.yaml
+kubectl apply -f k8s/prod/generated/cf-prod/rbac-litellm.yaml
 
 # Verifizieren
 kubectl get configmap -n litellm
@@ -172,7 +180,7 @@ kubectl get roles -n litellm
 ### 4. Persistent Volume Claim
 
 ```bash
-kubectl apply -f k8s/generated/cf-dev/pvc-litellm-data.yaml
+kubectl apply -f k8s/prod/generated/cf-prod/pvc-litellm-data.yaml
 
 # Verifizieren
 kubectl get pvc -n litellm
@@ -183,13 +191,13 @@ kubectl get pvc -n litellm
 
 ```bash
 # Deployment (mit Pods)
-kubectl apply -f k8s/generated/cf-dev/deploy-litellm-api.yaml
+kubectl apply -f k8s/prod/generated/cf-prod/deploy-litellm-api.yaml
 
 # Service (Load Balancing)
-kubectl apply -f k8s/generated/cf-dev/service-litellm-api.yaml
+kubectl apply -f k8s/prod/generated/cf-prod/service-litellm-api.yaml
 
 # HorizontalPodAutoscaler
-kubectl apply -f k8s/generated/cf-dev/hpa-litellm.yaml
+kubectl apply -f k8s/prod/generated/cf-prod/hpa-litellm.yaml
 
 # Verifizieren
 kubectl get deployment -n litellm
@@ -201,7 +209,7 @@ kubectl get hpa -n litellm
 ### 6. Ingress (Letzter Schritt)
 
 ```bash
-kubectl apply -f k8s/generated/cf-dev/ingress-litellm-api.yaml
+kubectl apply -f k8s/prod/generated/cf-prod/ingress-litellm-api.yaml
 
 # Verifizieren
 kubectl get ingress -n litellm
@@ -211,7 +219,7 @@ kubectl get ingress -n litellm
 
 ```bash
 # ACHTUNG: Nur wenn Pre-Checks ok!
-kubectl apply -f k8s/generated/cf-dev/
+kubectl apply -f k8s/prod/generated/cf-prod/
 
 # Überprüfung
 kubectl get all -n litellm
@@ -345,10 +353,10 @@ kubectl describe hpa -n litellm litellm-api-hpa
 
 ```bash
 # 1. Neue Config generieren
-python k8s/k8s_fill_config.py dev
+python k8s/k8s_fill_config.py prod
 
 # 2. Deployment mit neuem Image updaten
-kubectl apply -f k8s/generated/cf-dev/deploy-litellm-api.yaml
+kubectl apply -f k8s/prod/generated/cf-prod/deploy-litellm-api.yaml
 
 # 3. Rollout Status beobachten
 kubectl rollout status -n litellm deployment/litellm-api
@@ -361,13 +369,13 @@ kubectl get pods -n litellm -w
 
 ```bash
 # 1. Neue Secrets im Value-Store aktualisieren
-vim ~/.litellm/k8s-secrets/values_creds_dev.yaml
+vim ~/dev_data/LiteLLM/values_creds_prod.yaml
 
 # 2. Config neu generieren
-python k8s/k8s_fill_config.py dev
+python k8s/k8s_fill_config.py prod
 
 # 3. Secrets in K8s aktualisieren
-kubectl apply -f k8s/generated/cf-dev/secrets-litellm.yaml
+kubectl apply -f k8s/prod/generated/cf-prod/secrets-litellm.yaml
 
 # 4. Pods neu starten (automatisch durch Deployment)
 kubectl rollout restart deployment/litellm-api -n litellm
@@ -396,7 +404,7 @@ kubectl rollout undo -n litellm deployment/litellm-api --to-revision=2
 kubectl delete namespace litellm
 
 # Neu deployen
-kubectl apply -f k8s/generated/cf-dev/
+kubectl apply -f k8s/prod/generated/cf-prod/
 
 # Warten
 kubectl get pods -n litellm -w

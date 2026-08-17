@@ -1,6 +1,11 @@
 # LiteLLM Kubernetes deployment
 
-This repository contains the Kubernetes templates and a small wrapper around the `yaml_config_support` package.
+This repository now keeps the Kubernetes layout aligned by environment:
+
+- `k8s/dev/` - direct Minikube manifests for local development
+- `k8s/prod/templates/` - production templates for `yaml_config_support`
+- `k8s/prod/generated/` - rendered production manifests
+- `scripts/k8s/` - diagnostics helpers
 
 ## Deployment model
 
@@ -8,11 +13,12 @@ This repository contains the Kubernetes templates and a small wrapper around the
   - namespace: `litellm-dev`
   - service: `NodePort` on port `30080`
   - ingress disabled
-  - secrets from `~/dev_data/LiteLLM`
+  - local PostgreSQL runs in-cluster
 - Real prod: dedicated cluster
   - namespace: `litellm`
   - service: `ClusterIP`
-  - ingress enabled with TLS and cert-manager
+  - ingress enabled with TLS
+  - manifests rendered from `k8s/prod/templates/`
 
 ## Value store
 
@@ -29,44 +35,41 @@ Optional override:
 export LITELLM_SECRET_DIR=~/dev_data/LiteLLM
 ```
 
-Example secret file (`~/dev_data/LiteLLM/values_creds_dev.yaml`):
-
-```yaml
-stringData:
-  litellm-master-key: "dev-secret"
-  database-url: "postgresql://litellm:devpw@postgres-dev:5432/litellm_dev"
-  database-password: "devpw"
-  openai-api-key: "sk-dev"
-  anthropic-api-key: "sk-ant-dev"
-  jwt-secret: "dev-jwt-secret"
-```
-
-## Generate rendered manifests
-
-```bash
-cd /home/flow/dev_ldbv/LiteLLM
-python k8s/k8s_fill_config.py dev
-python k8s/k8s_fill_config.py prod --outdir /tmp/litellm-k8s
-```
-
 ## Local Minikube dev flow
 
 ```bash
 minikube start
-python k8s/k8s_fill_config.py dev
-kubectl apply -f k8s/generated/cf-dev/
+kubectl apply -f k8s/dev/
 minikube service litellm-api -n litellm-dev --url
 ```
 
 ## Production flow
 
 ```bash
+cd /home/flow/dev_ldbv/LiteLLM
 python k8s/k8s_fill_config.py prod
-kubectl apply -f k8s/generated/cf-prod/
+kubectl apply -f k8s/prod/generated/cf-prod/
+```
+
+## Diagnostics
+
+Use the bundled scripts to collect a quick status snapshot for nodes and workloads:
+
+```bash
+chmod +x scripts/k8s/*.sh
+./scripts/k8s/diagnose-dev.sh
+./scripts/k8s/diagnose-prod.sh
+```
+
+Useful overrides:
+
+```bash
+NAMESPACE=litellm-dev ./scripts/k8s/diagnose-dev.sh
+KUBE_CONTEXT=prod-cluster HELM_RELEASE=litellm ./scripts/k8s/diagnose-prod.sh
 ```
 
 ## Notes
 
 - Secrets are intentionally not committed.
-- `k8s/generated/` is ignored in git.
-- The generated manifests are rendered by the `yaml_config_support` overlay mechanism.
+- `k8s/prod/generated/` is ignored in git.
+- The production manifests are rendered by the `yaml_config_support` overlay mechanism.
